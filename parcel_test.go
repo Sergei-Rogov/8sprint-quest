@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,6 +33,7 @@ func getTestParcel() Parcel {
 func TestAddGetDelete(t *testing.T) {
 	db, err := sql.Open("sqlite", "tracker.db")
 	require.NoError(t, err)
+	defer db.Close()
 
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
@@ -45,11 +47,11 @@ func TestAddGetDelete(t *testing.T) {
 	stored, err := store.Get(id)
 	require.NoError(t, err)
 
-	require.Equal(t, parcel.Number, stored.Number)
-	require.Equal(t, parcel.Client, stored.Client)
-	require.Equal(t, parcel.Status, stored.Status)
-	require.Equal(t, parcel.Address, stored.Address)
-	require.Equal(t, parcel.CreatedAt, stored.CreatedAt)
+	assert.Equal(t, parcel.Number, stored.Number)
+	assert.Equal(t, parcel.Client, stored.Client)
+	assert.Equal(t, parcel.Status, stored.Status)
+	assert.Equal(t, parcel.Address, stored.Address)
+	assert.Equal(t, parcel.CreatedAt, stored.CreatedAt)
 
 	err = store.Delete(id)
 	require.NoError(t, err)
@@ -81,7 +83,11 @@ func TestSetAddress(t *testing.T) {
 
 	require.Equal(t, newAddress, stored.Address)
 
-	_ = store.Delete(id)
+	err = store.Delete(id)
+	assert.NoError(t, err)
+
+	_, err = store.Get(id)
+	assert.Error(t, err)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -103,7 +109,7 @@ func TestSetStatus(t *testing.T) {
 	stored, err := store.Get(id)
 	require.NoError(t, err)
 
-	require.Equal(t, ParcelStatusSent, stored.Status)
+	assert.Equal(t, ParcelStatusSent, stored.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -136,17 +142,17 @@ func TestGetByClient(t *testing.T) {
 
 	storedParcels, err := store.GetByClient(client)
 	require.NoError(t, err)
-	require.Len(t, storedParcels, len(parcels))
+	assert.Len(t, storedParcels, len(parcels))
 
 	for _, parcel := range storedParcels {
 		expected, ok := parcelMap[parcel.Number]
 
-		require.True(t, ok)
+		assert.True(t, ok)
 
-		require.Equal(t, expected.Number, parcel.Number)
-		require.Equal(t, expected.Client, parcel.Client)
-		require.Equal(t, expected.Status, parcel.Status)
-		require.Equal(t, expected.Address, parcel.Address)
-		require.Equal(t, expected.CreatedAt, parcel.CreatedAt)
+		assert.Equal(t, expected.Number, parcel.Number)
+		assert.Equal(t, expected.Client, parcel.Client)
+		assert.Equal(t, expected.Status, parcel.Status)
+		assert.Equal(t, expected.Address, parcel.Address)
+		assert.Equal(t, expected.CreatedAt, parcel.CreatedAt)
 	}
 }

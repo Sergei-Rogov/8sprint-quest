@@ -49,7 +49,9 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 		&p.Address,
 		&p.CreatedAt,
 	)
-
+	if err != nil {
+		return Parcel{}, err
+	}
 	return p, err
 }
 
@@ -83,7 +85,11 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 
 		res = append(res, p)
 	}
-	return res, rows.Err()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (s ParcelStore) SetStatus(number int, status string) error {
